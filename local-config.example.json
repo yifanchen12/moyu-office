@@ -1,0 +1,10 @@
+{
+  "port": 19100,
+  "comfyui_url": "http://127.0.0.1:8188",
+  "paper_workspace": "",
+  "training_files": [".local/training-progress.json"],
+  "bgi_log_dirs": [],
+  "sra_root": "",
+  "onedragon_root": "",
+  "dsh_homes": ["~/.dsh"]
+}

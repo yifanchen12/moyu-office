@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>摸鱼事务所</title>
+<style>
+:root{color-scheme:light;--ink:#29382e;--green:#45684d;--paper:#faf6e9;--line:#d3dcc4}
+*{box-sizing:border-box}body{margin:0;background:#e7eddb;color:var(--ink);font:14px/1.5 "Microsoft YaHei",system-ui,sans-serif}
+header{padding:18px 24px 14px;display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--line);background:var(--paper)}
+.logo{font-size:24px;background:#cedcba;box-shadow:3px 3px #92a67b;padding:6px 12px}h1{font-size:19px;margin:0;letter-spacing:2px}.sub{font-size:12px;color:#73816b}.clock{margin-left:auto;text-align:right;font-variant-numeric:tabular-nums}
+a{color:var(--green);text-underline-offset:3px}main{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(380px,1fr);gap:18px;padding:18px;align-items:start}
+.room,.board{border:2px solid #98ac83;background:var(--paper);box-shadow:4px 4px #c4cfb4}.caption{padding:10px 14px;border-bottom:2px solid var(--line);display:flex;justify-content:space-between;gap:8px;font-weight:600}.caption a{font-size:12px;font-weight:400}
+iframe{display:block;width:100%;height:auto;aspect-ratio:16/9;border:0;background:#172234}.cards{padding:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.card{position:relative;background:#fffdf4;border:1px solid var(--line);border-left:4px solid #b4bca9;padding:10px 11px;min-height:108px}.card.active{border-left-color:#648a52}.card.error{border-left-color:#c06553}.card.off{background:#f3f2e8;color:#7b8174}
+.head{display:flex;justify-content:space-between;align-items:center;gap:8px}.name{font-weight:700;font-size:14px}.badge{font-size:10px;white-space:nowrap;padding:1px 5px;background:#edf0e3;border-radius:2px}.active .badge{background:#dceacd;color:#3a6536}.error .badge{background:#f8e1d9;color:#9b3d31}.detail{font-size:12px;margin-top:7px;min-height:36px}.metrics{font-size:11px;color:#64745d;font-variant-numeric:tabular-nums}.bar{height:5px;background:#e8eddc;margin-top:6px;overflow:hidden}.bar span{display:block;height:100%;background:#75975d}.full{grid-column:1/-1}.foot{padding:0 13px 12px;font-size:11px;color:#7e8975}.connection{color:#a44e40}.hidden{display:none}
+@media(min-width:1700px){main{grid-template-columns:minmax(0,2fr) minmax(480px,1fr)}}
+@media(min-width:1001px){main{height:calc(100dvh - 84px);overflow:hidden}.board{max-height:100%;display:flex;flex-direction:column}.cards{overflow-y:auto;min-height:0}.card{min-height:90px;padding:8px 10px}.detail{min-height:28px;margin-top:5px}.caption,.foot{flex-shrink:0}}
+@media(max-width:1000px){main{grid-template-columns:1fr}.cards{grid-template-columns:repeat(3,minmax(0,1fr))}.full{grid-column:1/-1}}
+@media(max-width:560px){header{padding:12px}.logo{display:none}h1{font-size:16px}main{padding:10px;gap:12px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.clock{font-size:12px}}
+</style>
+<header><div class="logo" aria-hidden="true">▦</div><div><h1>摸鱼事务所</h1><div class="sub">工作有进度，摸鱼有音乐</div></div><div class="clock"><div id="clock"></div><div class="sub" id="connection">连接中</div></div></header>
+<main>
+ <section class="room"><div class="caption"><span>事务所日常</span><a href="/local/office" target="_blank" rel="noopener">只看小屋 ↗</a></div><iframe src="/local/office" title="摸鱼事务所"></iframe></section>
+ <section class="board"><div class="caption"><span>正在发生</span><span>本机状态</span></div><div class="cards" id="cards"></div><div class="foot">每 5 秒刷新 · 灰色表示尚无可读取数据<br>ComfyUI 百分比是当前节点进度；网盘写入不代表下载速度。</div></section>
+</main>
+<script>
+const labels={idle:'空闲',writing:'处理中',researching:'研究中',executing:'执行中',syncing:'有活动',error:'异常'};
+const icons={codex:'⌘',dsh:'✦',wechat:'◉',qq:'●',training:'▤',baidu:'☁',quark:'☁',bgi:'◆',sra:'✧',onedragon:'◈',comfyui:'▶',system:'▣'};
+const cards=new Map();
+function format(n){return Number(n).toLocaleString('zh-CN',{maximumFractionDigits:1})}
+function update(item){
+ let card=cards.get(item.id);
+ if(!card){card=document.createElement('article');card.className='card';card.innerHTML='<div class="head"><span class="name"></span><span class="badge"></span></div><div class="detail"></div><div class="metrics"></div><div class="bar hidden"><span></span></div>';cards.set(item.id,card);document.querySelector('#cards').append(card)}
+ card.className='card'+(item.id==='system'?' full':'')+(!item.available?' off':item.state==='error'?' error':['executing','writing','syncing'].includes(item.state)?' active':'');
+ card.title=item.source;
+ card.querySelector('.name').textContent=icons[item.id]+' '+item.name;
+ card.querySelector('.badge').textContent=item.available?(item.metrics.phase==='paused'?'已暂停':item.metrics.phase==='unknown'||item.metrics.uncertain_sessions&&!item.metrics.active_sessions?'待确认':labels[item.state]||item.state):'未接入 / 离线';
+ card.querySelector('.detail').textContent=item.detail;
+ const m=item.metrics;let extras=[];
+ if(item.id==='system'&&m.ram_total_gb!==undefined){extras.push('内存 '+format(m.ram_used_gb)+' / '+format(m.ram_total_gb)+' GB');if(m.gpu_percent!==undefined)extras.push('GPU '+m.gpu_percent+'% · '+m.gpu_temp_c+'°C');extras.push('↓ '+format(m.rx_kbps)+' KB/s · ↑ '+format(m.tx_kbps)+' KB/s')}
+ if(m.loss!==undefined)extras.push('loss '+format(m.loss));
+ if(m.current!==undefined)extras.push(format(m.current)+' / '+format(m.total));
+ if(m.disk_write_kbps!==undefined)extras.push('磁盘写入 '+format(m.disk_write_kbps)+' KB/s');
+ if(m.uncertain_sessions)extras.push(m.uncertain_sessions+' 个会话待确认');
+ if(m.last_alert_at)extras.push('上次提醒 '+new Date(m.last_alert_at).toLocaleTimeString('zh-CN'));
+ card.querySelector('.metrics').textContent=extras.join(' · ');
+ const bar=card.querySelector('.bar');bar.classList.toggle('hidden',m.percent===undefined);bar.querySelector('span').style.width=(m.percent||0)+'%';
+}
+async function refresh(){try{const response=await fetch('/local/status',{cache:'no-store'});if(!response.ok)throw Error();const data=await response.json();data.items.forEach(update);document.querySelector('#connection').textContent='已连接 · '+new Date().toLocaleTimeString('zh-CN');document.querySelector('#connection').classList.remove('connection')}catch{document.querySelector('#connection').textContent='连接中断 · 请启动办公室';document.querySelector('#connection').classList.add('connection')}}
+setInterval(()=>document.querySelector('#clock').textContent=new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}),1000);
+refresh();setInterval(refresh,5000);
+</script>
+</html>

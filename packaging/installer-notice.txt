@@ -1,0 +1,14 @@
+﻿Moyu Office / 摸鱼事务所
+
+This application observes local task metadata and system performance and displays a pixel-art dashboard using the installed Microsoft Edge browser. It does not install or control monitored applications. No administrator rights are required. No Windows kiosk policy or firewall exception is created.
+
+First launch creates private local configuration and random secrets. Configure installation and log paths in local-config.json. Local runtime files and settings are preserved on uninstall. The service listens only on 127.0.0.1.
+
+CODE: MIT; see LICENSE and LICENSE-MOYU.
+ARTWORK: NON-COMMERCIAL ONLY; see LICENSE and NOTICE.md. The code license does not grant commercial rights to bundled art.
+
+本程序读取本机任务元数据及性能，并使用已安装的 Microsoft Edge 显示像素看板。不安装或控制被监控程序，不需要管理员权限，不设置 Windows 锁定模式或防火墙例外。
+
+首次启动生成私有配置及随机密钥。请在 local-config.json 配置程序和日志目录。卸载保留本机配置及运行文件。服务仅监听 127.0.0.1。
+
+代码采用 MIT；附带美术素材仅限非商业用途。代码许可不授予素材商业使用权。
