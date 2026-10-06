@@ -2,6 +2,8 @@
 
 ## English
 
+Selecting a character uses the same allowlisted status snapshot as the dashboard. Launching is a separate user action: local executable/shortcut locations are resolved on this machine and are not returned in status responses. The button may restore an application window, open a local folder, or open a configured URL in the default browser. The opened application/site handles its own data and networking; the office does not submit a training or automation job.
+
 Moyu Office runs locally. Its collectors reduce observations to allowlisted status events and numeric metrics before displaying them. The project has no analytics, account registration, advertising SDK or telemetry upload endpoint.
 
 | Source | Read | Displayed or retained |
@@ -22,6 +24,8 @@ The bridge normally contacts only configured ComfyUI and local HTTP/WebSocket en
 The upstream memo and identity paths are redirected to this application's private `.local/` directory; the release does not read an adjacent personal memory folder or an unrelated OpenClaw identity file. Uninstall preserves user-generated settings and local runtime files. Back up and remove them manually if desired after stopping the service and closing the window.
 
 ## 简体中文
+
+角色详情使用与状态卡相同的白名单数据。启动软件是独立的用户操作：程序及快捷方式路径在本机解析，不通过状态接口返回。按钮可以唤起窗口、打开文件夹或在默认浏览器打开配置的网址；被打开的软件及网站自行处理其数据与联网，事务所不提交训练或自动化任务。
 
 摸鱼事务所在本机运行，采集后只展示白名单状态与数值，不包含分析统计、账户注册、广告 SDK 或遥测上传接口。
 

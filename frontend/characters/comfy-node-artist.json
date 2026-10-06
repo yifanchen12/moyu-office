@@ -1,0 +1,212 @@
+{
+  "frames": [
+    {
+      "filename": "0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5981941309255079,
+        "y": 0.9774266365688488
+      }
+    },
+    {
+      "filename": "1",
+      "frame": {
+        "x": 443,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5665914221218962,
+        "y": 0.9774266365688488
+      }
+    },
+    {
+      "filename": "2",
+      "frame": {
+        "x": 886,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.49548532731376976,
+        "y": 0.9774266365688488
+      }
+    },
+    {
+      "filename": "3",
+      "frame": {
+        "x": 1329,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.4435665914221219,
+        "y": 0.9774266365688488
+      }
+    },
+    {
+      "filename": "4",
+      "frame": {
+        "x": 0,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.6015801354401806,
+        "y": 0.8939051918735892
+      }
+    },
+    {
+      "filename": "5",
+      "frame": {
+        "x": 443,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5835214446952596,
+        "y": 0.8961625282167043
+      }
+    },
+    {
+      "filename": "6",
+      "frame": {
+        "x": 886,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5056433408577878,
+        "y": 0.8961625282167043
+      }
+    },
+    {
+      "filename": "7",
+      "frame": {
+        "x": 1329,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.4650112866817156,
+        "y": 0.8961625282167043
+      }
+    }
+  ],
+  "meta": {
+    "image": "comfy-node-artist.png",
+    "size": {
+      "w": 1774,
+      "h": 887
+    },
+    "scale": "1"
+  }
+}

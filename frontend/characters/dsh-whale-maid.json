@@ -1,0 +1,212 @@
+{
+  "frames": [
+    {
+      "filename": "0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.608352144469526,
+        "y": 0.9593679458239278
+      }
+    },
+    {
+      "filename": "1",
+      "frame": {
+        "x": 443,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5677200902934537,
+        "y": 0.9593679458239278
+      }
+    },
+    {
+      "filename": "2",
+      "frame": {
+        "x": 886,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5428893905191874,
+        "y": 0.9593679458239278
+      }
+    },
+    {
+      "filename": "3",
+      "frame": {
+        "x": 1329,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5598194130925508,
+        "y": 0.9593679458239278
+      }
+    },
+    {
+      "filename": "4",
+      "frame": {
+        "x": 0,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.6072234762979684,
+        "y": 0.8939051918735892
+      }
+    },
+    {
+      "filename": "5",
+      "frame": {
+        "x": 443,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5632054176072234,
+        "y": 0.8939051918735892
+      }
+    },
+    {
+      "filename": "6",
+      "frame": {
+        "x": 886,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5654627539503386,
+        "y": 0.8939051918735892
+      }
+    },
+    {
+      "filename": "7",
+      "frame": {
+        "x": 1329,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5744920993227991,
+        "y": 0.8939051918735892
+      }
+    }
+  ],
+  "meta": {
+    "image": "dsh-whale-maid.png",
+    "size": {
+      "w": 1774,
+      "h": 887
+    },
+    "scale": "1"
+  }
+}

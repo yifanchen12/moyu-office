@@ -1,0 +1,11 @@
+# Additional game character sprites
+
+Authorized on 2026-10-07: the user supplied three reference images and asked to start making SRA/Aha, BetterGI/Furina and ZenlessZoneZero-OneDragon/Chinatsu.
+
+Reuse the approved Codex/DSH pixel pipeline unchanged: one transparent 4-column × 2-row sheet per character, four idle frames and four walking frames; existing atlas metadata provides foot pivots. Map the new sheets only to source IDs sra, bgi (BetterGI) and onedragon. Preserve room geometry, other characters, collectors, details, launch entry points and music.
+
+The supplied artwork guides each identity: Aha is the silver-haired red/black theatrical woman in the user's first image; Furina is the white/blue-haired top-hat character in the second; Chinatsu is the mint-haired twin-ponytail character with white blouse, red tie, dark skirt and pink accessories in the third. Match the established outlined pixel chibi style, retain distinguishing features, omit poster text/backgrounds and oversized effects.
+
+Generate/inspect selected art, write atlas foot metadata, add existing animation-spec entries, synchronize source trees, then verify complete frames, motion/identity checks and the live room. Restart the window-reading backend on the normal desktop. Save successful prompts and preserve reference-art attribution; do not assert a new license for user-supplied third-party artwork. No GitHub publication or installer build is requested in this turn.
+
+Verified result, 2026-10-07: all three RGBA sheets contain eight complete frames, alpha margins pass the atlas guard, and software IDs are sra/bgi/onedragon. Existing scene checks pass for all five custom identities, idle/walk transitions, polling stability, room routing, labels and persistent sofa cat; 20 backend tests pass. The movement fixture uses an explicit nonzero leg to avoid a random zero-length first waypoint. Live room inspection confirms the three replacement characters, matching detail headings and launch buttons, both cats, and available NetEase title/artist marquee. Active/source assets are synchronized. Screenshot: .local/game-characters-final.png. Installer and GitHub release remain outside this art replacement task.

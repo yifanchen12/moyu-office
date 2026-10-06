@@ -1,0 +1,212 @@
+{
+  "frames": [
+    {
+      "filename": "0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5914221218961625,
+        "y": 0.9841986455981941
+      }
+    },
+    {
+      "filename": "1",
+      "frame": {
+        "x": 443,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5869074492099323,
+        "y": 0.9841986455981941
+      }
+    },
+    {
+      "filename": "2",
+      "frame": {
+        "x": 886,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5067720090293454,
+        "y": 0.9841986455981941
+      }
+    },
+    {
+      "filename": "3",
+      "frame": {
+        "x": 1329,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5067720090293454,
+        "y": 0.9841986455981941
+      }
+    },
+    {
+      "filename": "4",
+      "frame": {
+        "x": 0,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.6275395033860045,
+        "y": 0.9051918735891648
+      }
+    },
+    {
+      "filename": "5",
+      "frame": {
+        "x": 443,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.626410835214447,
+        "y": 0.9029345372460497
+      }
+    },
+    {
+      "filename": "6",
+      "frame": {
+        "x": 886,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5395033860045146,
+        "y": 0.9051918735891648
+      }
+    },
+    {
+      "filename": "7",
+      "frame": {
+        "x": 1329,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5474040632054176,
+        "y": 0.9029345372460497
+      }
+    }
+  ],
+  "meta": {
+    "image": "qq-penguin.png",
+    "size": {
+      "w": 1774,
+      "h": 887
+    },
+    "scale": "1"
+  }
+}

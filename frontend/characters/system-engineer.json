@@ -1,0 +1,212 @@
+{
+  "frames": [
+    {
+      "filename": "0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.6049661399548533,
+        "y": 0.909706546275395
+      }
+    },
+    {
+      "filename": "1",
+      "frame": {
+        "x": 443,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5643340857787811,
+        "y": 0.9119638826185101
+      }
+    },
+    {
+      "filename": "2",
+      "frame": {
+        "x": 886,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5191873589164786,
+        "y": 0.9119638826185101
+      }
+    },
+    {
+      "filename": "3",
+      "frame": {
+        "x": 1329,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.48758465011286684,
+        "y": 0.9119638826185101
+      }
+    },
+    {
+      "filename": "4",
+      "frame": {
+        "x": 0,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.6128668171557562,
+        "y": 0.8216704288939052
+      }
+    },
+    {
+      "filename": "5",
+      "frame": {
+        "x": 443,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5767494356659142,
+        "y": 0.8239277652370203
+      }
+    },
+    {
+      "filename": "6",
+      "frame": {
+        "x": 886,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5338600451467269,
+        "y": 0.8239277652370203
+      }
+    },
+    {
+      "filename": "7",
+      "frame": {
+        "x": 1329,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8239277652370203
+      }
+    }
+  ],
+  "meta": {
+    "image": "system-engineer.png",
+    "size": {
+      "w": 1774,
+      "h": 887
+    },
+    "scale": "1"
+  }
+}

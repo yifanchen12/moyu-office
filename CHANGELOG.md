@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased — scene interactions
+
+- Observe Codex desktop task acceptance, activity, completion and interruption metadata alongside CLI rollouts; delayed JSONL writes no longer hide desktop activity.
+- Drive local characters and live details from the same status snapshot, matched by stable program IDs.
+- Add bounded floor wandering, doorway transit and persistent movement across status polls.
+- Add clickable sprites, keyboard-accessible moving name labels and live read-only details.
+- Add a separate same-origin launch button using known IDs and trusted local entry points; training and automation jobs remain manual.
+- Add twelve female pixel character sheets with four idle and four walk frames each; preserve frame foot alignment and source artwork attribution.
+- Expand roaming floor routes, keep both cats visible, and correct full-room fitting and moving labels on touch-capable displays.
+
+修复 Codex 桌面任务漏检；角色在对应空地区域游走，点击查看实时详情，并可通过独立按钮打开对应软件。新增十二位女性像素角色及待机、行走帧，保留素材署名与许可边界。
+
 ## 0.1.0 — 2026-10-06
 
 First public release of Moyu Office, derived from Star Office UI.

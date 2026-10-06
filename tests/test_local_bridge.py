@@ -9,10 +9,61 @@ import types
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from local_bridge import Bridge, automation_event, lifecycle, progress, safe_training
+from local_bridge import Bridge, automation_event, lifecycle, progress, safe_training, codex_desktop_event
 
 
 class LocalBridgeTest(unittest.TestCase):
+    def test_desktop_activity_overrides_delayed_rollout_and_completes(self):
+        thread = '00000000-0000-0000-0000-000000000001'
+        turn = '00000000-0000-0000-0000-000000000002'
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            day = datetime.now().strftime('%Y/%m/%d')
+            logs = home/'AppData/Local/Codex/Logs'/day
+            sessions = home/'.codex/sessions'/day
+            logs.mkdir(parents=True); sessions.mkdir(parents=True)
+            from datetime import timezone, timedelta
+            started = datetime.now(timezone.utc)
+            old = (started-timedelta(seconds=60)).isoformat()
+            (sessions/'delayed.jsonl').write_text(json.dumps({'type':'session_meta','payload':{'id':thread}})+'\n'+
+                json.dumps({'type':'event_msg','timestamp':old,'payload':{'type':'task_complete'}})+'\n',encoding='utf-8')
+            def line(seconds, message):
+                stamp=(started+timedelta(seconds=seconds)).isoformat().replace('+00:00','Z')
+                return f'{stamp} info {message}\n'
+            path=logs/'codex-desktop-test.log'
+            path.write_text(line(0,f'[electron-message-handler] Reasoning summary item completed summary="PRIVATE_PROMPT" threadId={thread} turnId={turn}'),encoding='utf-8')
+            bridge=Bridge({},lambda items:None)
+            with patch('local_bridge.Path.home',return_value=home):
+                bridge.codex()
+                self.assertEqual(bridge.items['codex']['state'],'executing')
+                self.assertEqual(bridge.items['codex']['metrics']['active_sessions'],1)
+                self.assertNotIn('PRIVATE_PROMPT',json.dumps(bridge.snapshot()))
+                completion = 'turn-'+json.dumps(['account','agent-turn-complete','local',thread,turn],separators=(',',':'))
+                self.assertEqual(codex_desktop_event(line(1,f'[notifications-service] show notification kind=turn-complete notificationId={completion}'))[1],'idle')
+                with path.open('a',encoding='utf-8') as handle:
+                    handle.write(line(1,f'[desktop-notifications] show notification kind=turn-complete notificationId={completion}'))
+                    handle.write(line(2,f'[electron-message-handler] Reasoning summary item completed threadId={thread} turnId={turn}'))
+                bridge.codex()
+                self.assertEqual(bridge.items['codex']['state'],'idle')
+                with path.open('a',encoding='utf-8') as handle:
+                    handle.write(line(3,f'[electron-message-handler] Received turn/started for unknown conversation conversationId={thread}'))
+                bridge.codex()
+                self.assertEqual(bridge.items['codex']['state'],'executing')
+
+    def test_desktop_parser_does_not_confuse_completed_reasoning_with_task_end(self):
+        thread='00000000-0000-0000-0000-000000000001'
+        event=codex_desktop_event(f'2026-10-06T12:00:00.000Z info [electron-message-handler] Reasoning summary item completed threadId={thread}')
+        self.assertEqual(event[1],'executing')
+        self.assertIsNone(codex_desktop_event('private text task_started'))
+        self.assertEqual(lifecycle({'type':'event_msg','payload':{'type':'turn_aborted'}},'executing'),'idle')
+        accepted=f'2026-10-06T12:00:01.000Z info [AppServerConnection] response_routed conversationId={thread} errorCode=null method=turn/start'
+        self.assertEqual(codex_desktop_event(accepted)[1],'executing')
+        self.assertIsNone(codex_desktop_event(accepted.replace('errorCode=null','errorCode=RATE_LIMIT')))
+        self.assertEqual(codex_desktop_event(accepted.replace('turn/start','turn/interrupt'))[1],'idle')
+        spoof='00000000-0000-0000-0000-000000000009'
+        summary=f'2026-10-06T12:00:01.000Z info [electron-message-handler] Reasoning summary item completed summary="threadId={spoof}" threadId={thread}'
+        self.assertEqual(codex_desktop_event(summary)[0],thread)
+
     def test_automation_lifecycle_and_child_success(self):
         phase=automation_event('INFO | TaskManager thread started','sra')
         self.assertEqual(phase,'running')

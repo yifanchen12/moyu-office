@@ -10,7 +10,7 @@ Built on [Star Office UI](https://github.com/ringhyacinth/Star-Office-UI). **Cod
 
 | Source | Display | Limits |
 | --- | --- | --- |
-| Codex | Local task lifecycle events | Reads event metadata only; delayed log writes affect freshness; unfinished execution events older than 30 minutes are uncertain |
+| Codex | Desktop task acceptance, activity and completion events plus CLI lifecycle | Metadata only; does not rely on immediate JSONL writes; execution without fresh activity for 30 minutes is uncertain |
 | DeepSeek Harness (DSH) | turn/start and turn/end in compressed sessions | Does not install DSH or read/configure API credentials; requires Python 3.14 zstd support |
 | WeChat and QQ | New Windows notifications or taskbar flashing | No chat text or chat database access; muted messages and tray animations may not be observed |
 | BetterGI, SRA, ZZZ OneDragon | Log-based execution, termination and failures; OneDragon pause/resume | Observation only; version-specific markers may change; no reliable overall percentage |
@@ -21,6 +21,16 @@ Built on [Star Office UI](https://github.com/ringhyacinth/Star-Office-UI). **Cod
 | NetEase Cloud Music | Current song title and artist | Refreshes every five seconds; no playback/pause detection or playback controls |
 
 Missing data is explicitly marked unavailable. Process presence never implies successful task completion.
+
+Characters walk and pause in their assigned areas, moving to a different area when their status changes. Select a character or its keyboard-accessible name to see live details. The separate launch button opens a local application or entry point; it does not submit training or automation jobs.
+
+### Pixel characters and animation
+
+The source includes twelve female pixel chibi characters, each with four idle and four walk frames: the Codex silver dragon, DSH whale maid, SRA/Aha, BetterGI/Furina, OneDragon/Chinatsu, and seven mascots inspired by WeChat, QQ, thesis training, Baidu Netdisk, Quark Drive, ComfyUI and computer performance. These status-display mascots are not official product or game character assets.
+
+![Seven icon-inspired mascots](docs/images/female-mascots.png)
+
+Assets: [frontend/characters](frontend/characters). Exact prompts and specifications: [Codex / DSH](docs/character-art-prompts.md), [game-reference characters](docs/game-character-art-prompts.md), and [icon-inspired mascots](docs/remaining-character-art-prompts.md). Artwork terms and attribution: [NOTICE.md](NOTICE.md). These updates are published as source; the existing 0.1.0 installer does not include the new characters.
 
 ## Installation
 
@@ -56,7 +66,7 @@ Default URL: `http://127.0.0.1:19100/dashboard`. Change `port` in the local conf
 
 ## Configuration
 
-Edit the generated `local-config.json`; see [local-config.example.json](local-config.example.json). Unconfigured installation/log paths leave those tools unavailable. Monitored software is never downloaded or started automatically.
+Edit the generated `local-config.json`; see [local-config.example.json](local-config.example.json). Unconfigured installation/log paths leave those tools unavailable. Monitored software is never downloaded or started automatically; launch requests happen only after you click the detail dialog's button.
 
 | Field | Purpose |
 | --- | --- |
@@ -70,6 +80,8 @@ Edit the generated `local-config.json`; see [local-config.example.json](local-co
 | `dsh_homes` | DSH home directories; default `~/.dsh` |
 
 Codex, notifications, music and system metrics use current-user local metadata. No university/provider API configuration is shipped; no LLM API key is required.
+
+Optional `launch_targets` maps program IDs to trusted local entry points and overrides discovery. IDs: `codex`, `dsh`, `wechat`, `qq`, `training`, `baidu`, `quark`, `bgi`, `sra`, `onedragon`, `comfyui`, `system`. Targets may be absolute `.exe`, `.lnk`, `.bat`, `.cmd` paths, folders or HTTP(S) URLs. Example: `"launch_targets": {"comfyui": "D:\\Apps\\ComfyUI\\run_nvidia_gpu.bat"}`. Missing entry points disable the button. A ComfyUI URL opens its page; a configured startup script starts its service. Training opens the configured paper workspace, or Discovery when no workspace is configured. Launch targets remain in private local configuration.
 
 ### ComfyUI node progress
 
@@ -110,4 +122,4 @@ Windows packaging uses PyInstaller and Inno Setup 6. Build specifications are in
 
 ## Future work
 
-Custom cartoon character sheets and animations, and distinct program-specific quotes across task phases. These assets and quotes are not included in this version.
+Distinct program-specific quotes across task phases; not implemented yet.

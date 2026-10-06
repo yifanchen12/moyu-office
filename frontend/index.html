@@ -1459,7 +1459,7 @@
             if (memoTitle) memoTitle.textContent = t('memoTitle');
             const guestTitle = document.getElementById('guest-agent-panel-title');
             if (guestTitle) guestTitle.textContent = t('guestTitle');
-            const plaqueTitle = (typeof window.officeNameFromServer !== 'undefined' && window.officeNameFromServer) || t('officeTitle');
+            const plaqueTitle = LOCAL_SCENE ? '摸鱼事务所' : (window.officeNameFromServer || t('officeTitle'));
             if (window.officePlaqueText && window.officePlaqueText.setText) {
                 window.officePlaqueText.setText(plaqueTitle);
             }
@@ -1523,6 +1523,27 @@
             });
         }
 
+        const LOCAL_SCENE = window.location.pathname === '/local/office';
+        if (LOCAL_SCENE) {
+            const fitStyle = document.createElement('style');
+            // The upstream canvas CSS forces both dimensions to 100%; preserve its aspect ratio locally.
+            fitStyle.textContent = '#game-container canvas{width:min(100vw,177.777778vh)!important;height:min(100vh,56.25vw)!important;position:absolute;left:50%;top:50%;margin:0!important;transform:translate(-50%,-50%)}';
+            document.head.append(fitStyle);
+        }
+        const LOCAL_CHARACTER_SPECS = {
+            codex: {key:'local_codex_character',file:'codex-dragon.png',frameWidth:443,frameHeight:443,displayHeight:78},
+            dsh: {key:'local_dsh_character',file:'dsh-whale-maid.png',frameWidth:443,frameHeight:443,displayHeight:88},
+            sra: {key:'local_sra_character',file:'sra-aha.png',frameWidth:443,frameHeight:443,displayHeight:84},
+            bgi: {key:'local_bettergi_character',file:'bettergi-furina.png',frameWidth:443,frameHeight:443,displayHeight:84},
+            onedragon: {key:'local_onedragon_character',file:'onedragon-chinatsu.png',frameWidth:443,frameHeight:443,displayHeight:96},
+            wechat: {key:'local_wechat_character',file:'wechat-messenger.png',frameWidth:443,frameHeight:443,displayHeight:95},
+            qq: {key:'local_qq_character',file:'qq-penguin.png',frameWidth:443,frameHeight:443,displayHeight:92},
+            training: {key:'local_training_character',file:'training-researcher.png',frameWidth:443,frameHeight:443,displayHeight:100},
+            baidu: {key:'local_baidu_character',file:'baidu-cloud.png',frameWidth:443,frameHeight:443,displayHeight:93},
+            quark: {key:'local_quark_character',file:'quark-orbit.png',frameWidth:443,frameHeight:443,displayHeight:97},
+            comfyui: {key:'local_comfyui_character',file:'comfy-node-artist.png',frameWidth:443,frameHeight:443,displayHeight:92},
+            system: {key:'local_system_character',file:'system-engineer.png',frameWidth:443,frameHeight:443,displayHeight:104}
+        };
         const IS_TOUCH_DEVICE = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
 
         const config = {
@@ -1531,9 +1552,9 @@
             height: 720,
             parent: 'game-container',
             pixelArt: true,
-            // 桌面端保持 FIT；手机端用 RESIZE，并在相机里按高度做 fit（可横向 pan）
+            // 本地副屏始终完整显示房间；上游手机页面保留横向平移。
             scale: {
-                mode: IS_TOUCH_DEVICE ? Phaser.Scale.RESIZE : Phaser.Scale.FIT,
+                mode: !LOCAL_SCENE && IS_TOUCH_DEVICE ? Phaser.Scale.RESIZE : Phaser.Scale.FIT,
                 autoCenter: Phaser.Scale.CENTER_BOTH,
                 width: 1280,
                 height: 720
@@ -1722,6 +1743,9 @@
         const TYPEWRITER_DELAY = 50;
         let lastSeenGuestIds = new Set(); // 用于检测新加入的访客，触发欢迎气泡
         let guestWelcomeInitialized = false;
+        let localItems = new Map();
+        let selectedSourceId = null;
+        let characterDialog = null;
 
         // 状态控制栏函数（用于测试）
         function setState(state, detail) {
@@ -3468,16 +3492,52 @@ function toggleBrokerPanel() {
         }
 
         function getAreaRect(area) {
-            // 区域坐标（海辛提供，左上-右下；这里的 x/y 作为 sprite 底部锚点坐标来用）
-            // 休息区域范围（511,262）（841,621）
-            // 工作区域范围（190,526）（380,683）
-            // error 区域范围（932,275）（1109,327）
-            const rects = {
-                breakroom: { x1: 511, y1: 262, x2: 841, y2: 621 },
-                writing:   { x1: 190, y1: 526, x2: 380, y2: 683 },
-                error:     { x1: 932, y1: 275, x2: 1109, y2: 327 }
+            const rects = LOCAL_SCENE ? {
+                breakroom: {x1:550,y1:300,x2:920,y2:655},
+                writing: {x1:190,y1:300,x2:425,y2:655},
+                error: {x1:955,y1:285,x2:1230,y2:365}
+            } : {
+                breakroom: {x1:550,y1:548,x2:852,y2:655},
+                writing: {x1:235,y1:530,x2:414,y2:655},
+                error: {x1:955,y1:285,x2:1190,y2:330}
             };
             return rects[area] || rects.breakroom;
+        }
+
+        function characterFloors(area) {
+            if (!LOCAL_SCENE || area === 'error') return [getAreaRect(area)];
+            // Connected floor strips, excluding the desk, coffee table, sofa and room walls.
+            return area === 'writing' ? [
+                {x1:190,y1:548,x2:425,y2:655},
+                {x1:190,y1:300,x2:425,y2:355},
+                {x1:380,y1:300,x2:425,y2:655}
+            ] : [
+                {x1:550,y1:548,x2:920,y2:655},
+                {x1:855,y1:300,x2:920,y2:655}
+            ];
+        }
+
+        function characterRoute(from, point, area) {
+            if (!LOCAL_SCENE) return [point];
+            const origin = from.x > 922 && from.y < 380 ? 'error' : from.x < 450 ? 'writing' : 'breakroom';
+            if (origin === area && area === 'error') return [point];
+            const route = [];
+            const originX = origin === 'writing' ? 400 : 880;
+            const targetX = area === 'writing' ? 400 : 880;
+            if (origin !== area) {
+                if (origin === 'error') route.push({x:929,y:314}, {x:880,y:380});
+                else route.push({x:originX,y:from.y});
+                route.push({x:originX,y:620}, {x:targetX,y:620});
+                if (area === 'error') return [...route, {x:880,y:380}, {x:929,y:314}, point];
+            } else {
+                const sameBottom = from.y >= 548 && point.y >= 548;
+                const sameTop = area === 'writing' && from.y <= 355 && point.y <= 355;
+                const sameSide = area === 'writing' ? from.x >= 380 && point.x >= 380 : from.x >= 855 && point.x >= 855;
+                if (sameBottom || sameTop || sameSide) return [point];
+                route.push({x:targetX,y:from.y});
+            }
+            route.push({x:targetX,y:point.y}, point);
+            return route;
         }
 
         function randomInt(min, max) {
@@ -3485,72 +3545,190 @@ function toggleBrokerPanel() {
         }
 
         function randomPointInRect(rect) {
-            return { x: randomInt(rect.x1, rect.x2), y: randomInt(rect.y1, rect.y2) };
+            return { x: randomInt(rect.x1 + 18, rect.x2 - 18), y: randomInt(rect.y1 + 8, rect.y2 - 8) };
         }
 
-        function getAreaPoint(area, idx) {
-            // 非 demo 访客：仍用固定点位，避免每次轮询都抖动。
-            const map = {
-                breakroom: [
-                    { x: 511, y: 262 },
-                    { x: 841, y: 621 },
-                    { x: 690, y: 470 },
-                    { x: 600, y: 340 },
-                    { x: 770, y: 540 },
-                    { x: 550, y: 420 },
-                    { x: 720, y: 310 },
-                    { x: 650, y: 580 }
-                ],
-                writing: [
-                    { x: 190, y: 526 },
-                    { x: 380, y: 683 },
-                    { x: 300, y: 610 },
-                    { x: 240, y: 570 },
-                    { x: 350, y: 640 },
-                    { x: 160, y: 600 },
-                    { x: 420, y: 560 },
-                    { x: 280, y: 660 }
-                ],
-                error: [
-                    { x: 932, y: 275 },
-                    { x: 1109, y: 327 },
-                    { x: 1020, y: 305 },
-                    { x: 960, y: 340 },
-                    { x: 1070, y: 280 },
-                    { x: 990, y: 260 },
-                    { x: 1050, y: 350 },
-                    { x: 940, y: 310 }
-                ]
-            };
-            const arr = map[area] || map.breakroom;
-            return arr[idx % arr.length];
+        function characterArea(agent) {
+            // A stale area field must never override a current task state.
+            if (agent.state === 'error') return 'error';
+            if (['writing', 'researching', 'executing', 'syncing'].includes(agent.state)) return 'writing';
+            return 'breakroom';
+        }
+
+        function characterPoint(area, id) {
+            const floors = characterFloors(area);
+            const pick = () => randomPointInRect(floors[randomInt(0, floors.length-1)]);
+            let point = pick();
+            let bestPoint = point, bestDistance = -1;
+            // ponytail: bounded retries reduce overlap for this small office.
+            for (let attempt = 0; attempt < 8; attempt++) {
+                const neighbours = Object.entries(guestSprites).filter(([other, g]) => other !== id && g.area === area);
+                const distance = Math.min(...neighbours.map(([,g]) => Math.hypot(g.sprite.x-point.x, g.sprite.y-point.y)));
+                if (distance > bestDistance) { bestDistance = distance; bestPoint = point; }
+                if (distance >= 60) return point;
+                point = pick();
+            }
+            return bestPoint;
+        }
+
+        function characterLabel(agent) {
+            return ({system:'性能', onedragon:'一条龙', baidu:'百度', quark:'夸克'})[agent.sourceId] || agent.name || '访客';
+        }
+
+        function changeCharacterArea(g, area, id) {
+            guestTweens[id]?.move?.stop();
+            guestTweens[id]?.name?.stop();
+            delete guestTweens[id];
+            g.moving = false;
+            setCharacterMotion(g,false);
+            const point = characterPoint(area, id);
+            g.route = characterRoute(g.sprite, point, area);
+            g.area = area;
+            g.nextMoveAt = 0;
+        }
+
+        function setCharacterMotion(g, moving) {
+            if (g.animPrefix && g.sprite.anims) g.sprite.anims.play(g.animPrefix+(moving ? '_walk' : '_idle'),true);
+        }
+
+        function updateGuestMovement(time) {
+            const canvas = LOCAL_SCENE ? game.game?.canvas : null;
+            const bounds = canvas?.getBoundingClientRect();
+            const camera = game.cameras?.main;
+            Object.entries(guestSprites).forEach(([id, g]) => {
+                if (!g.moving && time >= g.nextMoveAt) {
+                    if (!g.route.length) g.route = characterRoute(g.sprite, characterPoint(g.area, id), g.area);
+                    const point = g.route.shift();
+                    const distance = Math.hypot(point.x - g.sprite.x, point.y - g.sprite.y);
+                    if (distance > 2) {
+                        g.moving = true;
+                        setCharacterMotion(g,true);
+                        if (g.sprite.setFlipX && Math.abs(point.x - g.sprite.x) > 2) g.sprite.setFlipX(point.x < g.sprite.x);
+                        guestTweens[id] = {move: game.tweens.add({
+                            targets: g.sprite, x: point.x, y: point.y,
+                            duration: Math.max(400, distance / 55 * 1000), ease: 'Linear',
+                            onComplete: () => {
+                                g.moving = false;
+                                if (!g.route.length) setCharacterMotion(g,false);
+                                g.nextMoveAt = game.time.now + (g.route.length ? 0 : randomInt(1400, 3800));
+                                delete guestTweens[id];
+                            }
+                        })};
+                    } else { setCharacterMotion(g,false); g.nextMoveAt = time + 1000; }
+                }
+                g.nameText.setPosition(g.sprite.x, g.sprite.y - g.nameOffset);
+                g.sprite.setDepth(2600 + g.sprite.y / 1000);
+                if (g.labelButton && bounds && camera) {
+                    const sx = bounds.width / game.scale.width, sy = bounds.height / game.scale.height;
+                    // Use Phaser's render transform, including camera origin, zoom and rotation.
+                    const point = camera.matrix.transformPoint(g.sprite.x-camera.scrollX, g.sprite.y-g.nameOffset-camera.scrollY);
+                    const x = bounds.left + point.x*sx;
+                    const y = bounds.top + point.y*sy;
+                    g.labelButton.style.left = x + 'px'; g.labelButton.style.top = y + 'px';
+                    g.labelButton.style.fontSize = Math.max(11, 15*sx*camera.zoom) + 'px';
+                    g.labelButton.style.visibility = x < bounds.left || x > bounds.right || y < bounds.top || y > bounds.bottom ? 'hidden' : 'visible';
+                }
+            });
+        }
+
+        function showCharacterDetails(id) {
+            if (!LOCAL_SCENE || !localItems.has(id)) return;
+            selectedSourceId = id;
+            if (!characterDialog) {
+                const style = document.createElement('style');
+                style.textContent = '#character-details{margin:auto;width:min(430px,calc(100vw - 32px));max-height:80vh;overflow:auto;border:3px solid #6f855e;border-radius:8px;padding:20px;color:#29382e;background:#faf6e9;font:14px/1.6 "Microsoft YaHei",sans-serif;box-shadow:0 12px 50px #0006}#character-details::backdrop{background:#10201880}#character-details h2{font-size:20px;margin:0 36px 14px 0}#character-details button{cursor:pointer;padding:7px 14px;border:1px solid #829571;border-radius:4px;background:#e7eddc;color:#29382e}#character-details button:disabled{cursor:default;opacity:.55}#character-details .close{position:absolute;right:12px;top:12px;padding:2px 9px}#character-details dl{display:grid;grid-template-columns:86px 1fr;gap:7px;margin:0 0 16px}#character-details dt{color:#718068}#character-details dd{margin:0;overflow-wrap:anywhere}#character-details .notice{margin:8px 0 0;font-size:12px;color:#718068}';
+                document.head.append(style);
+                characterDialog = document.createElement('dialog');
+                characterDialog.id = 'character-details';
+                characterDialog.setAttribute('aria-labelledby', 'character-title');
+                characterDialog.innerHTML = '<button class="close" aria-label="关闭详情">×</button><h2 id="character-title"></h2><dl></dl><button class="launch">启动软件</button><p class="notice" aria-live="polite"></p>';
+                document.body.append(characterDialog);
+                characterDialog.querySelector('.close').onclick = () => characterDialog.close();
+                characterDialog.addEventListener('close', () => { selectedSourceId = null; });
+                characterDialog.querySelector('.launch').onclick = launchSelectedSoftware;
+            }
+            characterDialog.querySelector('.notice').textContent = '';
+            refreshCharacterDetails();
+            if (!characterDialog.open) characterDialog.showModal();
+        }
+
+        function refreshCharacterDetails() {
+            if (!selectedSourceId || !characterDialog) return;
+            const item = localItems.get(selectedSourceId);
+            if (!item) return;
+            const labels = {idle:'空闲',writing:'处理中',researching:'研究中',executing:'执行中',syncing:'有活动',error:'异常'};
+            const metrics = item.metrics || {};
+            const status = !item.available ? '未接入 / 离线' : metrics.phase === 'paused' ? '已暂停' :
+                (metrics.phase === 'unknown' || metrics.uncertain_sessions && !metrics.active_sessions) ? '待确认' : labels[item.state] || '待确认';
+            characterDialog.querySelector('h2').textContent = item.name;
+            const rows = [['状态',status], ['当前情况',item.detail], ['数据来源',item.source],
+                ['更新时间',new Date(item.updated_at).toLocaleString('zh-CN')]];
+            const names = {percent:'节点 / 任务进度 (%)',current:'当前步骤',total:'总步骤',loss:'Loss',epoch:'Epoch',learning_rate:'学习率',
+                active_sessions:'执行中的会话',uncertain_sessions:'待确认的会话',observed_sessions:'观察到的会话',desktop_sessions:'桌面会话',
+                cpu_percent:'CPU (%)',ram_percent:'内存 (%)',ram_used_gb:'已用内存 (GB)',ram_total_gb:'总内存 (GB)',
+                gpu_percent:'GPU (%)',gpu_temp_c:'GPU 温度 (°C)',vram_used_mb:'已用显存 (MB)',vram_total_mb:'总显存 (MB)',
+                rx_kbps:'网络接收 (KB/s)',tx_kbps:'网络发送 (KB/s)',disk_write_kbps:'磁盘写入 (KB/s)',processes:'进程数',
+                last_alert_at:'上次消息提醒',phase:'任务阶段',limit:'读取范围',shell_hook:'任务栏提醒检测'};
+            for (const [key, label] of Object.entries(names)) {
+                const value = metrics[key];
+                if (value === null || value === undefined) continue;
+                rows.push([label, typeof value === 'number' ? value.toLocaleString('zh-CN',{maximumFractionDigits:6}) :
+                    typeof value === 'boolean' ? (value ? '已启用' : '未启用') : String(value)]);
+            }
+            const list = characterDialog.querySelector('dl');
+            list.replaceChildren();
+            rows.forEach(([key, value]) => {
+                const term = document.createElement('dt'), content = document.createElement('dd');
+                term.textContent = key; content.textContent = value || '暂无数据'; list.append(term, content);
+            });
+            const button = characterDialog.querySelector('.launch');
+            button.disabled = !item.launch?.available || button.dataset.pending === 'true';
+            button.textContent = item.launch?.label || '启动软件';
+            button.title = item.launch?.reason || '';
+            if (!item.launch?.available) characterDialog.querySelector('.notice').textContent = item.launch?.reason || '尚未配置软件启动入口';
+        }
+
+        async function launchSelectedSoftware() {
+            const id = selectedSourceId;
+            if (!id) return;
+            const button = characterDialog.querySelector('.launch');
+            button.dataset.pending = 'true'; button.disabled = true;
+            try {
+                const response = await fetch('/local/launch', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
+                const result = await response.json();
+                if (selectedSourceId === id) characterDialog.querySelector('.notice').textContent = result.message || '启动失败，请检查本机启动配置';
+            } catch {
+                if (selectedSourceId === id) characterDialog.querySelector('.notice').textContent = '连接失败，请确认事务所服务正在运行';
+            } finally {
+                button.dataset.pending = 'false'; refreshCharacterDetails();
+            }
         }
 
         function renderGuestAgentsInScene() {
             if (!game) return;
             const visitors = getMergedVisitors();
             const seenIds = new Set();
-            let idxBreak = 0, idxWrite = 0, idxError = 0;
 
             visitors.forEach(agent => {
                 const id = agent.agentId;
                 seenIds.add(id);
 
                 const isDemo = !!agent.isDemo || (DEMO_MODE && (id === 'demo_nika' || id === 'demo_mercury' || agent.name === '尼卡' || agent.name === '水星'));
-                const area = agent.area || (agent.state === 'error' ? 'error' : (agent.state === 'idle' ? 'breakroom' : 'writing'));
-
-                const idx = area === 'breakroom' ? idxBreak++ : area === 'error' ? idxError++ : idxWrite++;
-                const p = isDemo
-                    ? randomPointInRect(getAreaRect(area))
-                    : getAreaPoint(area, idx);
+                const area = characterArea(agent);
 
                 if (!guestSprites[id]) {
+                    const p = characterPoint(area, id);
                     // 优先用图标：demo visitor 有专门映射
                     let sprite;
                     const isDemoNika = DEMO_MODE && (agent.agentId === 'demo_nika' || agent.name === '尼卡');
                     const isDemoMercury = DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === '水星');
                     
-                    if (isDemoNika || isDemoMercury) {
+                    const custom = LOCAL_SCENE ? LOCAL_CHARACTER_SPECS[agent.sourceId] : null;
+                    const customReady = custom && game.textures.exists(custom.key) && game.anims.exists(custom.key+'_idle');
+                    if (customReady) {
+                        sprite = game.add.sprite(p.x,p.y,custom.key).setOrigin(0.5,1).setScale(custom.displayHeight/custom.frameHeight);
+                        sprite.anims.play(custom.key+'_idle',true);
+                    } else if (isDemoNika || isDemoMercury) {
                         // 统一使用动态像素角色，避免依赖已删除的 demo 静态图
                         const animKey = 'guest_anim_1';
                         const f = 0;
@@ -3572,7 +3750,7 @@ function toggleBrokerPanel() {
                         const animIdleKey = `guest_anim_${animIdx}_idle`;
 
                         if (game.textures.exists(animKey) && game.anims.exists(animIdleKey)) {
-                            sprite = game.add.sprite(p.x, p.y, animKey).setOrigin(0.5, 1).setScale(4.0);
+                            sprite = game.add.sprite(p.x, p.y, animKey).setOrigin(0.5, 1).setScale(2.4);
                             sprite.anims.play(animIdleKey, true);
                         } else {
                             const staticAvatarKey = agent.avatar && game.textures.exists(agent.avatar)
@@ -3599,7 +3777,7 @@ function toggleBrokerPanel() {
                     // demo 水星下移 10px（仅 demo_mercury）
                     const yOffset = (DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === '水星')) ? 10 : 0;
 
-                    const nameTextY = isDemo ? ((p.y + yOffset) - 80) : ((p.y + yOffset) - 120);
+                    const nameTextY = (p.y + yOffset) - 80;
                     const nameText = game.add.text(p.x, nameTextY, agent.name || '访客', {
                         fontFamily: 'ArkPixel, monospace',
                         fontSize: isDemo ? '16px' : '15px',
@@ -3609,47 +3787,31 @@ function toggleBrokerPanel() {
                     }).setOrigin(0.5);
                     nameText.setDepth(2601);
 
-                    guestSprites[id] = { sprite, nameText };
+                    guestSprites[id] = { sprite, nameText, area, nameOffset:80, moving:false, animPrefix:customReady ? custom.key : null,
+                        route:[], nextMoveAt:game.time.now + randomInt(500, 2000) };
+                    if (agent.sourceId) {
+                        const select = (pointer, x, y, event) => {
+                            event?.stopPropagation();
+                            if (pointer.getDistance() < 12) showCharacterDetails(agent.sourceId);
+                        };
+                        sprite.setInteractive({useHandCursor:true}).on('pointerup', select);
+                        nameText.setInteractive({useHandCursor:true}).on('pointerup', select);
+                        // DOM labels provide the same selection to keyboard and screen-reader users.
+                        const button = document.createElement('button');
+                        button.type = 'button'; button.textContent = characterLabel(agent);
+                        button.title = agent.name;
+                        button.setAttribute('aria-label', agent.name + ' 软件详情');
+                        button.style.cssText = 'position:fixed;z-index:3000;transform:translate(-50%,-50%);padding:2px 5px;border:0;background:transparent;color:white;font-family:ArkPixel,monospace;text-shadow:1px 1px 2px black,-1px -1px 2px black;cursor:pointer;visibility:hidden';
+                        button.onclick = () => showCharacterDetails(agent.sourceId);
+                        document.body.append(button);
+                        guestSprites[id].labelButton = button;
+                        nameText.setVisible(false);
+                    }
                 } else {
                     const g = guestSprites[id];
-                    const yOffset = (DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === '水星')) ? 10 : 0;
-
-                    // demo：平滑移动（避免闪现）；非 demo：保持稳定位置（避免轮询抖动）
-                    if (isDemo) {
-                        // kill previous tweens for this id
-                        if (guestTweens[id] && guestTweens[id].move) {
-                            guestTweens[id].move.stop();
-                        }
-                        if (guestTweens[id] && guestTweens[id].name) {
-                            guestTweens[id].name.stop();
-                        }
-
-                        const duration = 2000 + Math.floor(Math.random() * 1000); // 2~3s 走路感
-                        const ease = 'Sine.easeInOut';
-
-                        const moveTween = game.tweens.add({
-                            targets: g.sprite,
-                            x: p.x,
-                            y: p.y + yOffset,
-                            duration,
-                            ease
-                        });
-                        const nameTween = game.tweens.add({
-                            targets: g.nameText,
-                            x: p.x,
-                            y: (p.y + yOffset) - 80,
-                            duration,
-                            ease
-                        });
-                        guestTweens[id] = { move: moveTween, name: nameTween };
-                    } else {
-                        g.sprite.x = p.x;
-                        g.sprite.y = p.y + yOffset;
-                        g.nameText.x = p.x;
-                        g.nameText.y = (p.y + yOffset) - 120;
-                    }
-
+                    if (g.area !== area) changeCharacterArea(g, area, id);
                     g.nameText.setText(agent.name || '访客');
+                    if (g.labelButton) g.labelButton.textContent = characterLabel(agent);
                 }
             });
 
@@ -3658,6 +3820,7 @@ function toggleBrokerPanel() {
                 if (!seenIds.has(id)) {
                     guestSprites[id].sprite.destroy();
                     guestSprites[id].nameText.destroy();
+                    guestSprites[id].labelButton?.remove();
                     delete guestSprites[id];
                     if (guestBubbles[id]) {
                         guestBubbles[id].destroy();
@@ -3840,11 +4003,19 @@ function toggleBrokerPanel() {
             // demo 随机状态先更新（不依赖后端）
             maybeRandomizeDemoVisitors();
 
-            return fetch('/agents?t=' + Date.now(), { cache: 'no-store' })
+            return fetch((LOCAL_SCENE ? '/local/status?t=' : '/agents?t=') + Date.now(), { cache: 'no-store' })
+                .then(response => { if (!response.ok) throw new Error('Status unavailable'); return response; })
                 .then(response => response.json())
                 .then(data => {
                     // 无论后端返回是否为数组，demo=1 都应保证本地 demo 访客可见
-                    guestAgents = Array.isArray(data) ? data : [];
+                    if (LOCAL_SCENE) {
+                        localItems = new Map((data.items || []).map(item => [item.id, item]));
+                        guestAgents = [...localItems.values()].map(item => ({
+                            agentId:'local_' + item.id, sourceId:item.id, name:item.name,
+                            state:item.state, detail:item.detail, area:characterArea(item), isMain:false
+                        }));
+                        refreshCharacterDetails();
+                    } else guestAgents = Array.isArray(data) ? data : [];
 
                     // 新访客检测：触发 Star 欢迎气泡（只欢迎真实访客，不欢迎 demo）
                     try {
@@ -3892,6 +4063,7 @@ function toggleBrokerPanel() {
                 })
                 .catch(error => {
                     console.error('拉取访客列表失败:', error);
+                    if (LOCAL_SCENE && characterDialog?.open) characterDialog.querySelector('.notice').textContent = '连接中断，显示上次读取的数据；请查看更新时间';
                     // 即使拉取失败，demo 也要能渲染
                     if (DEMO_MODE) {
                         renderGuestAgentList();
@@ -4017,6 +4189,10 @@ function toggleBrokerPanel() {
             this.load.spritesheet('flowers', '/static/flowers-bloom-v2.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: FLOWERS_FRAME_W, frameHeight: FLOWERS_FRAME_H });
 
             // Guest/Demo agent sprites
+            if (LOCAL_SCENE) Object.values(LOCAL_CHARACTER_SPECS).forEach(spec => {
+                this.load.atlas(spec.key, '/static/characters/'+spec.file+'?v={{VERSION_TIMESTAMP}}',
+                    '/static/characters/'+spec.file.replace('.png','.json')+'?v={{VERSION_TIMESTAMP}}');
+            });
             this.load.spritesheet('guest_anim_1', '/static/guest_anim_1.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 32, frameHeight: 32 });
             this.load.spritesheet('guest_anim_2', '/static/guest_anim_2.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 32, frameHeight: 32 });
             this.load.spritesheet('guest_anim_3', '/static/guest_anim_3.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 32, frameHeight: 32 });
@@ -4067,6 +4243,14 @@ function toggleBrokerPanel() {
                 });
             }
 
+            if (LOCAL_SCENE) Object.values(LOCAL_CHARACTER_SPECS).forEach(spec => {
+                if (!this.textures.exists(spec.key)) return;
+                for (const [state,start,end,rate] of [['idle',0,3,4],['walk',4,7,8]]) {
+                    this.anims.create({key:spec.key+'_'+state,
+                        frames:this.anims.generateFrameNumbers(spec.key,{start,end}),frameRate:rate,repeat:-1});
+                }
+            });
+
             star = game.physics.add.sprite(areas.breakroom.x, areas.breakroom.y, 'star_idle');
             star.setOrigin(0.5);
             star.setScale(IDLE_STAR_SCALE);
@@ -4085,7 +4269,7 @@ function toggleBrokerPanel() {
             const plaqueY = config.height - 36;
             const plaqueBg = game.add.rectangle(plaqueX, plaqueY, 420, 44, 0x5d4037);
             plaqueBg.setStrokeStyle(3, 0x3e2723);
-            const plaqueText = game.add.text(plaqueX, plaqueY, t('officeTitle'), {
+            const plaqueText = game.add.text(plaqueX, plaqueY, LOCAL_SCENE ? '摸鱼事务所' : t('officeTitle'), {
                 fontFamily: 'ArkPixel, monospace',
                 fontSize: '18px',
                 fill: '#ffd700',
@@ -4297,7 +4481,7 @@ function toggleBrokerPanel() {
             // 允许手机端“拖动/滑动”来移动视野（本质：移动 Phaser Camera）
             // iPhone 等触屏设备默认开启；桌面端默认关闭（可手动开）。
             const panToggle = document.getElementById('pan-toggle');
-            const isTouchDevice = IS_TOUCH_DEVICE;
+            const isTouchDevice = !LOCAL_SCENE && IS_TOUCH_DEVICE;
             let panEnabled = false;
             let isPanning = false;
             let panStart = null; // {x,y,sx,sy}
@@ -4552,6 +4736,12 @@ function toggleBrokerPanel() {
 
             // 移动 + 小踱步
             moveStar(time);
+            updateGuestMovement(time);
+            // All local programs, including performance, have one selectable guest.
+            if (LOCAL_SCENE) {
+                window.starWorking?.setVisible(false);
+                window.errorBug?.setVisible(false);
+            }
 
             // guest 随机想法泡泡
             maybeShowGuestBubble(time);
@@ -4589,7 +4779,16 @@ function toggleBrokerPanel() {
 
         function applyVisualState(nextState) {
             // Idle: show Star idle animation (main character)
-            if (nextState === 'idle') {
+            if (LOCAL_SCENE) {
+                // The sofa cat is room decor; software activity belongs to the guest characters.
+                sofa.anims.stop();
+                sofa.setTexture('sofa_idle');
+                star.setVisible(true);
+                star.setScale(IDLE_STAR_SCALE);
+                star.anims.play('star_idle', true);
+                star.setPosition(IDLE_SOFA_ANCHOR.x, IDLE_SOFA_ANCHOR.y);
+                window.starWorking?.setVisible(false);
+            } else if (nextState === 'idle') {
                 sofa.anims.stop();
                 sofa.setTexture('sofa_idle');
 
@@ -4668,9 +4867,9 @@ function toggleBrokerPanel() {
                 .then(data => {
                     try {
                         if (data.officeName) {
-                            window.officeNameFromServer = data.officeName;
+                            window.officeNameFromServer = LOCAL_SCENE ? '摸鱼事务所' : data.officeName;
                             if (window.officePlaqueText && window.officePlaqueText.setText) {
-                                window.officePlaqueText.setText(data.officeName);
+                                window.officePlaqueText.setText(window.officeNameFromServer);
                             }
                         }
                         const nextState = normalizeState(data.state);
@@ -4711,6 +4910,7 @@ function toggleBrokerPanel() {
         }
 
         function moveStar(time) {
+            if (LOCAL_SCENE) return; // Keep the decorative sofa cat separate from program movement.
             // Use pending state if available (for target area during transition)
             const effectiveState = pendingDesiredState || currentState;
             const stateInfo = STATES[effectiveState] || STATES.idle;

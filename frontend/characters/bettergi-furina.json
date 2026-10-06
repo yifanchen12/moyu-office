@@ -1,0 +1,212 @@
+{
+  "frames": [
+    {
+      "filename": "0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.536117381489842,
+        "y": 0.981941309255079
+      }
+    },
+    {
+      "filename": "1",
+      "frame": {
+        "x": 443,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5349887133182845,
+        "y": 0.981941309255079
+      }
+    },
+    {
+      "filename": "2",
+      "frame": {
+        "x": 886,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.536117381489842,
+        "y": 0.981941309255079
+      }
+    },
+    {
+      "filename": "3",
+      "frame": {
+        "x": 1329,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5372460496613995,
+        "y": 0.981941309255079
+      }
+    },
+    {
+      "filename": "4",
+      "frame": {
+        "x": 0,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5778781038374717,
+        "y": 0.9209932279909706
+      }
+    },
+    {
+      "filename": "5",
+      "frame": {
+        "x": 443,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5632054176072234,
+        "y": 0.9209932279909706
+      }
+    },
+    {
+      "filename": "6",
+      "frame": {
+        "x": 886,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5677200902934537,
+        "y": 0.9209932279909706
+      }
+    },
+    {
+      "filename": "7",
+      "frame": {
+        "x": 1329,
+        "y": 443,
+        "w": 443,
+        "h": 443
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 443,
+        "h": 443
+      },
+      "sourceSize": {
+        "w": 443,
+        "h": 443
+      },
+      "pivot": {
+        "x": 0.5812641083521445,
+        "y": 0.9209932279909706
+      }
+    }
+  ],
+  "meta": {
+    "image": "bettergi-furina.png",
+    "size": {
+      "w": 1774,
+      "h": 887
+    },
+    "scale": "1"
+  }
+}

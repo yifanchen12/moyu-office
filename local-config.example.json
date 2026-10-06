@@ -6,5 +6,6 @@
   "bgi_log_dirs": [],
   "sra_root": "",
   "onedragon_root": "",
-  "dsh_homes": ["~/.dsh"]
+  "dsh_homes": ["~/.dsh"],
+  "launch_targets": {}
 }

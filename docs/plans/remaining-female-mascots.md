@@ -1,0 +1,13 @@
+# Remaining female software mascots
+
+Authorized on 2026-10-07: user asks to independently design remaining female characters from icon features. Continue the approved pixel sprite replacement pipeline with no new interface or behavior.
+
+Remaining source IDs: wechat, qq, training, baidu, quark, comfyui, system. The music marquee has no software character and remains unchanged. Keep existing Codex, DSH, SRA, BetterGI and OneDragon designs and both cats.
+
+Designs: green/white speech-bubble messenger; black/white penguin-scarf girl; purple thesis researcher with neural-node brooch; azure cloud-drive girl with three-color loop; cobalt/white orbit girl; installed ComfyUI yellow/dark-plum node craftswoman; silver/cyan CPU engineer. Training and performance use functional motifs because they have no unique brand icon. These are original fan mascots, not official product designs.
+
+Reuse frontend/index.html LOCAL_CHARACTER_SPECS, atlas loading, idle/walk animations, floor routing, detail and launch handlers unchanged. Add seven transparent PNG/JSON pairs under frontend/characters, extend the specs and scripts/build_character_atlases.py fixed file list, save prompts and attribution. No new dependency. Existing source/active trees both receive selected assets. Backend collectors, local_launch.py, local config and room layout stay unchanged.
+
+Build/validation: generate one 4-column/2-row sheet per role with four idle and four walk frames; inspect each and enforce complete-frame alpha margins; build alpha-derived foot pivots without changing PNGs; wire the existing specs; run node tests/scene_interactions.cjs; restart local service on the normal Windows desktop; verify live display and role details. Preserve artwork and prompt metadata. No installer rebuild or GitHub publication in this scope.
+
+Verified on 2026-10-07: all 56 new frames pass the alpha-margin guard, all 12 software IDs use custom sprites, and existing scene checks pass for routing, idle/walk switching, stable identities, polling and camera labels. The normal-desktop backend serves all 14 new PNG/atlas resources successfully; music remains available. The live room shows the replacements and both cats. Seven detail headings match the selected software; existing launch availability is preserved (training and performance currently have disabled launch buttons). Added a static mascot-preview.html art gallery so all seven designs can be reviewed without live-character overlap; it displays original PNGs without altering them. Room screenshot: .local/remaining-female-mascots-final.png. Exact prompts and selected outputs: docs/remaining-character-art-prompts.md.

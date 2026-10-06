@@ -10,7 +10,7 @@
 
 | 数据来源 | 显示内容 | 实际边界 |
 | --- | --- | --- |
-| Codex | task_started / task_complete 等本机生命周期 | 仅读会话事件；日志落盘存在延迟，30 分钟未更新的执行状态标待确认 |
+| Codex | 桌面任务请求、活动与结束事件，以及 CLI 会话生命周期 | 仅提取元数据；不依赖 JSONL 及时落盘，30 分钟没有新活动的执行状态标待确认 |
 | DeepSeek Harness（DSH） | 压缩会话中的 turn/start / turn/end | 不读取或配置模型 API 密钥，不安装 DSH；依赖 Python 3.14 的 zstd |
 | 微信、QQ | Windows 新通知或任务栏闪烁信号 | 不读消息正文或聊天数据库；静音、托盘动画可能无法覆盖 |
 | BetterGI、SRA、绝区零一条龙 | 日志中的运行、结束、异常；一条龙暂停/恢复 | 只观察，不控制游戏；关键词及版本变化会影响识别，无可靠总百分比 |
@@ -21,6 +21,16 @@
 | 网易云音乐 | 当前歌名、歌手，循环滚动 | 每 5 秒刷新；不检测或展示播放/暂停，不播放歌曲 |
 
 无数据时显示“未接入／离线”及具体原因，不用进程存在推断任务完成。
+
+角色会在对应区域内走动与停留，状态变化时换区。点击角色或名字可查看实时详情；名字按钮也支持键盘操作。详情内的“启动软件”按钮只打开本机程序或入口，不代替你启动训练或自动化任务。
+
+### 像素角色与动画
+
+源码现包含十二位女性像素 Q 版，每人四帧待机、四帧行走：Codex 银龙、DSH 鲸鱼女仆、SRA 阿哈、BetterGI 芙宁娜、一条龙千夏，以及按微信、QQ、论文训练、百度网盘、夸克网盘、ComfyUI、电脑性能特色设计的七位角色。角色仅用于状态展示；它们不是产品或游戏的官方人物素材。
+
+![七位图标主题角色](docs/images/female-mascots.png)
+
+素材位于 [frontend/characters](frontend/characters)，完整提示词与规格见 [Codex / DSH](docs/character-art-prompts.md)、[游戏参考角色](docs/game-character-art-prompts.md)和[图标主题角色](docs/remaining-character-art-prompts.md)。素材许可与署名见 [NOTICE.md](NOTICE.md)。这些更新当前发布为源码，已有 0.1.0 安装包不包含新角色。
 
 ## 安装
 
@@ -56,7 +66,7 @@ python -m venv .venv
 
 ## 配置数据来源
 
-编辑首次启动生成的 `local-config.json`，模板见 [local-config.example.json](local-config.example.json)。路径不配置时相应工具显示未接入。程序不会下载或启动被监控软件。
+编辑首次启动生成的 `local-config.json`，模板见 [local-config.example.json](local-config.example.json)。路径不配置时相应工具显示未接入。程序不会下载或自动启动被监控软件；仅在你点击详情中的按钮后请求打开已配置的软件。
 
 | 字段 | 用途 |
 | --- | --- |
@@ -68,6 +78,9 @@ python -m venv .venv
 | `sra_root` | SRA 安装根目录，自动发现版本子目录的日志 |
 | `onedragon_root` | 绝区零一条龙根目录，读取 `.log/log.txt` |
 | `dsh_homes` | DSH 会话目录所属的 home；默认 `~/.dsh` |
+| `launch_targets` | 可选的“软件 ID → 本机启动入口”映射；覆盖自动发现结果，仅保存在本机配置 |
+
+启动入口可以是绝对路径的 `.exe`、`.lnk`、`.bat`、`.cmd`、文件夹，或 HTTP(S) 地址。软件 ID 为 `codex`、`dsh`、`wechat`、`qq`、`training`、`baidu`、`quark`、`bgi`、`sra`、`onedragon`、`comfyui`、`system`。例如 `"launch_targets": {"comfyui": "D:\\Apps\\ComfyUI\\run_nvidia_gpu.bat"}`。没有找到入口时按钮禁用；ComfyUI 只有网址时按钮打开其页面，配置启动脚本后才会启动服务。训练默认打开论文工作区，未配置工作区时打开 Discovery 平台。请仅配置你信任的程序入口。
 
 Codex、消息信号、音乐和性能从当前用户的本机元数据读取。应用不包含学校或其他提供商 API 配置，也不需要任何 LLM API 密钥。
 
@@ -110,4 +123,4 @@ report('/data/training-progress.json', current=120, total=1000, loss=0.32)
 
 ## 后续方向
 
-自定义卡通角色及动画帧、按程序独立设计覆盖不同阶段的语录。当前版本不包含这些尚未制作的素材或语录。
+按程序独立设计覆盖不同任务阶段的语录；当前尚未实现。

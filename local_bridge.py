@@ -29,6 +29,45 @@ PROC_NAMES = {"wechat": {"weixin.exe", "wechat.exe"}, "qq": {"qq.exe"},
               "bgi": {"bettergi.exe"}, "sra": {"sra.exe", "sra-cli.exe", "sra-server.exe"},
               "onedragon": {"onedragon-launcher.exe", "onedragon.exe"}}
 VALID_STATES = {"idle", "writing", "researching", "executing", "syncing", "error"}
+UUID_PATTERN = r"[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}"
+
+
+def codex_desktop_event(line):
+    """Read task metadata only; never return the reasoning summary or log body."""
+    stamp = re.match(r"(\d{4}-\d{2}-\d{2}T[\d:.]+Z)\s", line)
+    if not stamp:
+        return None
+    # Ignore quoted values, including reasoning text, when locating log fields.
+    metadata = re.sub(r'"(?:[^"\\]|\\.)*"', '""', line)
+    thread = re.search(r"\b(?:threadId|conversationId)=("+UUID_PATTERN+r")\b", metadata)
+    turn = re.search(r"\bturnId=("+UUID_PATTERN+r")\b", metadata)
+    state = None
+    if "[AppServerConnection] response_routed " in metadata and re.search(r"\berrorCode=null\b", metadata):
+        method = re.search(r"\bmethod=(turn/start|turn/steer|turn/interrupt)\b", metadata)
+        if method: state = "idle" if method[1] == "turn/interrupt" else "executing"
+    if "[electron-message-handler]" in metadata:
+        if "Reasoning summary item completed " in metadata:
+            state = "executing"
+        elif "Received turn/started for unknown conversation " in metadata:
+            state = "executing"
+        elif "Received turn/completed for unknown conversation " in metadata:
+            state = "idle"
+        elif "maybe_resume_success " in metadata:
+            status = re.search(r"\blatestTurnStatus=(inProgress|completed|interrupted|failed)\b", metadata)
+            if status:
+                state = {"inProgress":"executing", "failed":"error"}.get(status[1], "idle")
+    completion_module = any(module in metadata for module in ("[electron-message-handler]", "[notifications-service]", "[desktop-notifications]"))
+    if completion_module and "kind=turn-complete" in metadata and "notificationId=turn-" in metadata:
+        try:
+            fields, _ = json.JSONDecoder().raw_decode(line.split("notificationId=turn-", 1)[1])
+            # Observed ID: [account, event kind, host, thread ID, turn ID].
+            if len(fields) == 5 and fields[2] == "local" and all(re.fullmatch(UUID_PATTERN, v) for v in fields[-2:]):
+                return fields[-2], "idle", datetime.fromisoformat(stamp[1]).timestamp(), fields[-1]
+        except (ValueError, TypeError, IndexError):
+            pass
+    if state and thread:
+        return thread[1], state, datetime.fromisoformat(stamp[1]).timestamp(), turn[1] if turn else None
+    return None
 
 
 def progress(current, total):
@@ -114,6 +153,7 @@ class Bridge:
         self.stop = threading.Event()
         self.items = {}
         self.codex_cache, self.dsh_cache = {}, {}
+        self.codex_desktop_offsets, self.codex_desktop_states = {}, {}
         self.proc = {}
         self.proc_io = {}
         self.automation_cache = {}
@@ -247,11 +287,11 @@ class Bridge:
             directory = folder / day.strftime("%Y/%m/%d")
             files.extend(directory.glob("*.jsonl"))
         files = sorted(set(files), key=lambda p: p.stat().st_mtime, reverse=True)[:48]
-        active, errors, stale = 0, 0, 0
+        records = {}
         for path in files:
             stat = path.stat()
-            cached = self.codex_cache.get(str(path), (0, "idle"))
-            state = cached[1]
+            cached = self.codex_cache.get(str(path), (0, "idle", 0, str(path)))
+            state, stamp, thread_id = cached[1:]
             if stat.st_size != cached[0]:
                 with path.open("rb") as h:
                     start = cached[0] if cached[0] <= stat.st_size else 0
@@ -261,12 +301,28 @@ class Bridge:
                     offset = start
                     for line in h:
                         if not line.endswith(b'\n'): break
-                        if b'"event_msg"' in line:
-                            try: state = lifecycle(json.loads(line), state)
+                        if b'"event_msg"' in line or b'"session_meta"' in line:
+                            try:
+                                row = json.loads(line)
+                                if row.get("type") == "session_meta":
+                                    thread_id = row.get("payload", {}).get("id") or thread_id
+                                event = row.get("payload", {}).get("type")
+                                state = lifecycle(row, state)
+                                if event in {"task_started", "task_complete", "turn_aborted", "task_failed", "turn/error"}:
+                                    stamp = datetime.fromisoformat(row["timestamp"]).timestamp() if row.get("timestamp") else stat.st_mtime
                             except (ValueError, TypeError, AttributeError): pass
                         offset = h.tell()
-                self.codex_cache[str(path)] = (offset, state)
-            if time.time()-stat.st_mtime > 1800 and state == "executing":
+                self.codex_cache[str(path)] = (offset, state, stamp, thread_id)
+            previous = records.get(thread_id)
+            if previous is None or stamp > previous[1]:
+                records[thread_id] = (state, stamp)
+        desktop = self.codex_desktop()
+        for thread_id, (state, stamp, _) in desktop.items():
+            if thread_id not in records or stamp > records[thread_id][1]:
+                records[thread_id] = (state, stamp)
+        active, errors, stale = 0, 0, 0
+        for state, stamp in records.values():
+            if time.time()-stamp > 1800 and state == "executing":
                 stale += 1
             elif state == "executing":
                 active += 1
@@ -275,8 +331,39 @@ class Bridge:
         detail = f"{active} 个会话正在执行" if active else ("存在尚未收到结束事件的会话" if stale else "已观察会话暂无执行事件")
         if stale: detail += f"；{stale} 个旧会话状态待确认"
         self.set("codex", "executing" if active else ("error" if errors else "idle"), detail,
-                 "本机任务生命周期 JSONL（桌面 / CLI）",
-                 {"active_sessions": active, "uncertain_sessions": stale, "observed_sessions": len(files)}, bool(files))
+                 "桌面任务事件 / CLI 生命周期（仅元数据）",
+                 {"active_sessions": active, "uncertain_sessions": stale, "observed_sessions": len(records),
+                  "desktop_sessions": len(desktop)}, bool(records))
+
+    def codex_desktop(self):
+        home = Path.home()
+        roots = [home/"AppData/Local/Codex/Logs",
+                 home/"AppData/Local/Packages/OpenAI.Codex_2p2nqsd0c76g0/LocalCache/Local/Codex/Logs"]
+        candidates = set()
+        for root in roots:
+            for day in (datetime.now(), datetime.fromtimestamp(time.time()-86400)):
+                candidates.update(p.resolve() for p in (root/day.strftime("%Y/%m/%d")).glob("*.log"))
+        for path in sorted(candidates, key=lambda p:p.stat().st_mtime, reverse=True)[:24]:
+            stat = path.stat()
+            offset = self.codex_desktop_offsets.get(str(path), 0)
+            if offset > stat.st_size: offset = 0
+            if offset == stat.st_size: continue
+            with path.open("rb") as handle:
+                handle.seek(offset)
+                for raw in handle:
+                    if not raw.endswith(b"\n"): break
+                    event = codex_desktop_event(raw.decode("utf-8", errors="replace"))
+                    if event:
+                        thread, state, stamp, turn = event
+                        old = self.codex_desktop_states.get(thread)
+                        # Late reasoning events from an already completed turn must not revive it.
+                        ended_turn = old and old[0] == "idle" and turn and old[2] == turn
+                        if (not old or stamp > old[1]) and not (ended_turn and state == "executing"):
+                            self.codex_desktop_states[thread] = (state, stamp, turn)
+                    offset = handle.tell()
+            self.codex_desktop_offsets[str(path)] = offset
+        self.codex_desktop_states = {k:v for k,v in self.codex_desktop_states.items() if time.time()-v[1] < 86400}
+        return self.codex_desktop_states
 
     def dsh(self):
         from compression import zstd

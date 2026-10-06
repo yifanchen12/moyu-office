@@ -18,6 +18,7 @@ for line in (ROOT/".env").read_text(encoding="utf-8").splitlines():
 from flask import g, jsonify, request, send_from_directory
 import app as upstream
 from local_bridge import Bridge, safe_training
+from local_launch import LocalLauncher
 from security_utils import is_strong_secret, is_strong_drawer_pass
 
 app = upstream.app
@@ -72,6 +73,7 @@ def project(items):
 
 
 bridge = Bridge(config, project)
+launcher = LocalLauncher(config)
 
 
 @app.route("/dashboard")
@@ -82,7 +84,7 @@ def dashboard():
 @app.route("/local/office")
 def office_view():
     response = upstream.index()
-    # Display-only adaptation of the original scene; its source remains intact.
+    # Fullscreen adaptation of the local scene.
     css = '<style>body{padding:0!important;overflow:hidden!important;gap:0!important}#main-stage,#game-container{width:100vw!important;max-width:100vw!important}#game-container{height:100vh!important;max-height:none!important}#bottom-panels,#coords-toggle,#pan-toggle,#lang-toggle-group{display:none!important}</style>'
     html = response.get_data(as_text=True).replace('</head>', css+'</head>', 1)
     html = html.replace('海辛小龙虾的办公室', '摸鱼事务所').replace('Star 的像素办公室', '摸鱼事务所')
@@ -93,7 +95,23 @@ def office_view():
 
 @app.route("/local/status")
 def local_status():
-    return jsonify({"application": "moyu-office", "version": "0.1.0", "items": bridge.snapshot(), "music": bridge.music_snapshot(), "port": config["port"]})
+    items = bridge.snapshot()
+    for item in items: item["launch"] = launcher.info(item["id"])
+    return jsonify({"application": "moyu-office", "version": "0.1.0", "items": items, "music": bridge.music_snapshot(), "port": config["port"]})
+
+
+@app.route("/local/launch", methods=["POST"])
+def launch_software():
+    # Unlike read-only snapshots, launching always requires a browser Origin.
+    if request.headers.get("Origin") not in ALLOWED_ORIGINS:
+        return jsonify({"ok":False, "message":"需要从本机事务所页面启动"}), 403
+    if request.content_length and request.content_length > 512:
+        return jsonify({"ok":False, "message":"请求过大"}), 413
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or set(data) != {"id"} or not isinstance(data["id"], str):
+        return jsonify({"ok":False, "message":"需要有效的软件 ID"}), 400
+    ok, message, status = launcher.launch(data["id"])
+    return jsonify({"ok":ok, "message":message}), status
 
 
 def valid_origin():
