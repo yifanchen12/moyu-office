@@ -1288,6 +1288,7 @@
     </div>
 
     <script src="/static/vendor/phaser-3.80.1.min.js?v={{VERSION_TIMESTAMP}}"></script>
+    <script src="/static/character-quotes.js?v={{VERSION_TIMESTAMP}}"></script>
     <script>
         // 简易中英文切换
         let uiLang = localStorage.getItem('uiLang') || 'en';
@@ -1746,6 +1747,7 @@
         let localItems = new Map();
         let selectedSourceId = null;
         let characterDialog = null;
+        const quoteDirector = LOCAL_SCENE ? window.OfficeCharacterQuotes.createDirector() : null;
 
         // 状态控制栏函数（用于测试）
         function setState(state, detail) {
@@ -3493,7 +3495,7 @@ function toggleBrokerPanel() {
 
         function getAreaRect(area) {
             const rects = LOCAL_SCENE ? {
-                breakroom: {x1:550,y1:300,x2:920,y2:655},
+                breakroom: {x1:550,y1:252,x2:920,y2:655},
                 writing: {x1:190,y1:300,x2:425,y2:655},
                 error: {x1:955,y1:285,x2:1230,y2:365}
             } : {
@@ -3506,14 +3508,16 @@ function toggleBrokerPanel() {
 
         function characterFloors(area) {
             if (!LOCAL_SCENE || area === 'error') return [getAreaRect(area)];
-            // Connected floor strips, excluding the desk, coffee table, sofa and room walls.
+            // Connected floor strips, including the hearth and excluding furniture/walls.
             return area === 'writing' ? [
                 {x1:190,y1:548,x2:425,y2:655},
                 {x1:190,y1:300,x2:425,y2:355},
                 {x1:380,y1:300,x2:425,y2:655}
             ] : [
                 {x1:550,y1:548,x2:920,y2:655},
-                {x1:855,y1:300,x2:920,y2:655}
+                {x1:855,y1:300,x2:920,y2:655},
+                {x1:550,y1:252,x2:722,y2:278},
+                {x1:550,y1:260,x2:566,y2:560}
             ];
         }
 
@@ -3522,8 +3526,9 @@ function toggleBrokerPanel() {
             const origin = from.x > 922 && from.y < 380 ? 'error' : from.x < 450 ? 'writing' : 'breakroom';
             if (origin === area && area === 'error') return [point];
             const route = [];
-            const originX = origin === 'writing' ? 400 : 880;
-            const targetX = area === 'writing' ? 400 : 880;
+            const loungeSpine = p => p.y < 548 && p.x < 855 ? 558 : 880;
+            const originX = origin === 'writing' ? 400 : origin === 'error' ? 880 : loungeSpine(from);
+            const targetX = area === 'writing' ? 400 : area === 'error' ? 880 : loungeSpine(point);
             if (origin !== area) {
                 if (origin === 'error') route.push({x:929,y:314}, {x:880,y:380});
                 else route.push({x:originX,y:from.y});
@@ -3531,10 +3536,12 @@ function toggleBrokerPanel() {
                 if (area === 'error') return [...route, {x:880,y:380}, {x:929,y:314}, point];
             } else {
                 const sameBottom = from.y >= 548 && point.y >= 548;
-                const sameTop = area === 'writing' && from.y <= 355 && point.y <= 355;
-                const sameSide = area === 'writing' ? from.x >= 380 && point.x >= 380 : from.x >= 855 && point.x >= 855;
+                const sameTop = area === 'writing' ? from.y <= 355 && point.y <= 355 : from.y <= 278 && point.y <= 278;
+                const sameSide = area === 'writing' ? from.x >= 380 && point.x >= 380
+                    : (from.x >= 855 && point.x >= 855) || (from.x <= 566 && point.x <= 566);
                 if (sameBottom || sameTop || sameSide) return [point];
-                route.push({x:targetX,y:from.y});
+                route.push({x:originX,y:from.y});
+                if (originX !== targetX) route.push({x:originX,y:620}, {x:targetX,y:620});
             }
             route.push({x:targetX,y:point.y}, point);
             return route;
@@ -3545,7 +3552,9 @@ function toggleBrokerPanel() {
         }
 
         function randomPointInRect(rect) {
-            return { x: randomInt(rect.x1 + 18, rect.x2 - 18), y: randomInt(rect.y1 + 8, rect.y2 - 8) };
+            const padX = Math.min(18, (rect.x2 - rect.x1) / 2);
+            const padY = Math.min(8, (rect.y2 - rect.y1) / 2);
+            return { x: randomInt(rect.x1 + padX, rect.x2 - padX), y: randomInt(rect.y1 + padY, rect.y2 - padY) };
         }
 
         function characterArea(agent) {
@@ -3836,6 +3845,14 @@ function toggleBrokerPanel() {
         }
 
         function maybeShowGuestBubble(time) {
+            if (LOCAL_SCENE) {
+                const quote = quoteDirector.next(performance.now(), {
+                    paused: Boolean(characterDialog?.open),
+                    ids: Object.keys(guestSprites).filter(id => id.startsWith('local_')).map(id => id.slice(6))
+                });
+                if (quote) showLocalCharacterBubble(quote);
+                return;
+            }
             if (time - lastGuestBubbleAt < 5200) return;
             lastGuestBubbleAt = time;
             const ids = Object.keys(guestSprites);
@@ -3887,6 +3904,54 @@ function toggleBrokerPanel() {
                     delete guestBubbles[id];
                 }
             }, 3200);
+        }
+
+        function positionLocalCharacterBubble(b, g) {
+            const width = b.list[0].width, height = b.list[0].height;
+            const x = Math.max(width / 2 + 12, Math.min(1280 - width / 2 - 12, g.sprite.x));
+            const y = Math.max(height / 2 + 12, Math.min(720 - height / 2 - 12,
+                g.nameText.y - (g.nameText.height || 16) / 2 - height / 2 - 10));
+            b.list.forEach(child => child.setPosition(x, y));
+        }
+
+        function showLocalCharacterBubble(quote) {
+            const id = 'local_' + quote.id;
+            const g = guestSprites[id];
+            if (!g) return;
+            Object.keys(guestBubbles).forEach(key => {
+                guestBubbles[key].destroy();
+                delete guestBubbles[key];
+            });
+            const txt = game.add.text(0, 0, quote.text, {
+                fontFamily: 'ArkPixel, monospace', fontSize: (IS_TOUCH_DEVICE ? 14 : 12) + 'px',
+                fill: '#26352c', align: 'center', wordWrap: {width: 230, useAdvancedWrap: true}
+            }).setOrigin(0.5);
+            const bg = game.add.rectangle(0, 0, txt.width + 24, txt.height + 18, 0xfffbed, 0.97).setStrokeStyle(2, 0x6f855e);
+            const b = game.add.container(0, 0, [bg, txt]).setDepth(2700);
+            b.__followAgentId = id;
+            b.__localQuote = true;
+            guestBubbles[id] = b;
+            positionLocalCharacterBubble(b, g);
+            // Mirror canvas dialogue for screen readers, without making a second visible bubble.
+            let announcement = document.getElementById('character-quote');
+            if (!announcement) {
+                announcement = document.createElement('div');
+                announcement.id = 'character-quote';
+                announcement.setAttribute('role', 'status');
+                announcement.setAttribute('aria-live', 'polite');
+                announcement.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;pointer-events:none';
+                document.body.append(announcement);
+            }
+            announcement.dataset.character = quote.id;
+            announcement.textContent = g.nameText.text + '：' + quote.text;
+            announcement.__bubble = b;
+            setTimeout(() => {
+                if (guestBubbles[id] === b) {
+                    b.destroy();
+                    delete guestBubbles[id];
+                }
+                if (announcement.__bubble === b) announcement.textContent = '';
+            }, 4000);
         }
 
         function maybeRandomizeDemoVisitors() {
@@ -4010,6 +4075,7 @@ function toggleBrokerPanel() {
                     // 无论后端返回是否为数组，demo=1 都应保证本地 demo 访客可见
                     if (LOCAL_SCENE) {
                         localItems = new Map((data.items || []).map(item => [item.id, item]));
+                        quoteDirector.observe([...localItems.values()], performance.now());
                         guestAgents = [...localItems.values()].map(item => ({
                             agentId:'local_' + item.id, sourceId:item.id, name:item.name,
                             state:item.state, detail:item.detail, area:characterArea(item), isMain:false
@@ -4063,6 +4129,7 @@ function toggleBrokerPanel() {
                 })
                 .catch(error => {
                     console.error('拉取访客列表失败:', error);
+                    if (LOCAL_SCENE) quoteDirector.observe([], performance.now());
                     if (LOCAL_SCENE && characterDialog?.open) characterDialog.querySelector('.notice').textContent = '连接中断，显示上次读取的数据；请查看更新时间';
                     // 即使拉取失败，demo 也要能渲染
                     if (DEMO_MODE) {
@@ -4753,6 +4820,7 @@ function toggleBrokerPanel() {
                     const g = guestSprites[id];
                     if (!b || !g) return;
                     if (b.__followAgentId !== id) return;
+                    if (b.__localQuote) { positionLocalCharacterBubble(b, g); return; }
                     b.x = 0;
                     b.y = 0;
                     // children[0]=bg, children[1]=text
@@ -5028,6 +5096,7 @@ function toggleBrokerPanel() {
         }
 
         function showBubble() {
+            if (LOCAL_SCENE) return; // Software dialogue belongs to its own character; preserve independent cat bubbles.
             if (bubble) { bubble.destroy(); bubble = null; }
             const texts = getBubbleTextsByState(currentState);
             if (currentState === 'idle') return; // idle 不显示气泡（可按需开启）

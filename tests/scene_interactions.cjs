@@ -85,6 +85,30 @@ for (const area of ['writing','breakroom']) {
     }
   }
 }
+// The hearth is a reachable lounge destination, including the narrow table-side approach.
+const loungeFloors=context.characterFloors('breakroom');
+const loungeInside=p=>loungeFloors.some(r=>p.x>=r.x1 && p.x<=r.x2 && p.y>=r.y1 && p.y<=r.y2);
+const hearth={x:670,y:266};
+assert.ok(loungeInside(hearth),'fireplace foreground is walkable');
+for (const [from,to] of [[{x:700,y:610},hearth],[hearth,{x:890,y:350}],[hearth,{x:600,y:600}],[{x:558,y:400},hearth]]) {
+ let previous=from;
+ for (const next of context.characterRoute(from,to,'breakroom')) {
+  for (let step=0;step<=60;step++) assert.ok(loungeInside({x:previous.x+(next.x-previous.x)*step/60,y:previous.y+(next.y-previous.y)*step/60}),'hearth routes must go around the coffee table and sofa');
+  previous=next;
+ }
+ assert.deepEqual(previous,to);
+}
+const narrow=loungeFloors.find(r=>r.x2-r.x1<36);
+for (let i=0;i<30;i++) {
+ const point=context.randomPointInRect(narrow);
+ assert.ok(point.x>=narrow.x1 && point.x<=narrow.x2 && point.y>=narrow.y1 && point.y<=narrow.y2,'padding must fit narrow floor strips');
+}
+for (const [from,to,area] of [[hearth,{x:400,y:600},'writing'],[{x:400,y:600},hearth,'breakroom'],[hearth,{x:1000,y:320},'error']]) {
+ const route=context.characterRoute(from,to,area);
+ assert.equal(route.at(-1).x,to.x);assert.equal(route.at(-1).y,to.y);
+ assert.ok(route.some(p=>p.x===558),'cross-state movement uses the hearth approach');
+}
+console.log('Hearth reachability, furniture detours, narrow-strip sampling and cross-state routes: PASS');
 // The animated sofa cat is decor and remains visible through program-state changes.
 const catContext={LOCAL_SCENE:true,window:{},IDLE_STAR_SCALE:1,IDLE_SOFA_ANCHOR:{x:798,y:272},serverroom:null,syncAnimSprite:null,
  star:{setVisible(v){this.visible=v},setScale(){},setPosition(x,y){this.x=x;this.y=y},anims:{play(key){catContext.animation=key}}},
